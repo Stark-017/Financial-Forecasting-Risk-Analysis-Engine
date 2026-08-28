@@ -268,9 +268,12 @@ def get_company_info(symbol: str, exchange: str = 'NSE') -> Optional[dict]:
     for ts in [symbol.upper() + '.NS', symbol.upper() + '.BO']:
         try:
             t = yf.Ticker(ts, session=session)
-            inf = t.info
+            try:
+                inf = t.info
+            except Exception:
+                inf = {}
             
-            # Fallback for Streamlit Cloud yfinance blocking (.info returns {} or raises error)
+            # Fallback 1: fast_info (often blocked on Cloud)
             if not inf or ('regularMarketPrice' not in inf and 'currentPrice' not in inf):
                 try:
                     fi = t.fast_info
@@ -280,16 +283,28 @@ def get_company_info(symbol: str, exchange: str = 'NSE') -> Optional[dict]:
                         inf['marketCap'] = getattr(fi, 'market_cap', 0)
                         inf['fiftyTwoWeekHigh'] = getattr(fi, 'year_high', None)
                         inf['fiftyTwoWeekLow'] = getattr(fi, 'year_low', None)
-                        
-                        # Lookup actual name from our builtin dictionary
-                        c_name = symbol
-                        for sym, name, exch, isin in BUILTIN_EQUITIES:
-                            if sym.upper() == symbol.upper():
-                                c_name = name
-                                break
-                        inf['longName'] = inf.get('longName', c_name)
                 except Exception:
                     pass
+
+            # Fallback 2: history endpoint (rarely blocked)
+            if not inf or ('regularMarketPrice' not in inf and 'currentPrice' not in inf):
+                try:
+                    hist = t.history(period="1d")
+                    if not hist.empty:
+                        inf = inf or {}
+                        inf['regularMarketPrice'] = float(hist['Close'].iloc[-1])
+                except Exception:
+                    pass
+            
+            # Populate name if we successfully got a price but Yahoo blocked the name metadata
+            if inf and ('regularMarketPrice' in inf or 'currentPrice' in inf):
+                if 'longName' not in inf and 'shortName' not in inf:
+                    c_name = symbol
+                    for sym, name, exch, isin in BUILTIN_EQUITIES:
+                        if sym.upper() == symbol.upper():
+                            c_name = name
+                            break
+                    inf['longName'] = c_name
 
             if inf and (inf.get('longName') or inf.get('shortName')):
                 if inf.get('regularMarketPrice') or inf.get('currentPrice') or inf.get('marketCap'):
