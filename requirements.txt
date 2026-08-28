@@ -12,3 +12,4 @@ nsetools>=1.0.11
 bsedata>=0.4.0
 nsepython>=1.18
 Pillow>=10.0.0
+scikit-learn>=1.3.0
