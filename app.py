@@ -295,10 +295,9 @@ if mode == "🏠 Overview & Vision":
             """, unsafe_allow_html=True)
 
     st.markdown("<br><br>", unsafe_allow_html=True)
-    def launch_pipeline():
+    if st.button("LAUNCH PIPELINE →", type="primary", use_container_width=True):
         st.session_state['view_mode'] = "⚡ Guided Stages Pipeline"
-
-    st.button("LAUNCH PIPELINE ➔", type="primary", use_container_width=True, on_click=launch_pipeline)
+        st.rerun()
 
 elif mode == "ℹ️ About Platform":
     from pages.about import page_about
