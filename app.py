@@ -413,26 +413,38 @@ if _do_scroll_top:
     <script>
     (function() {
         function doScroll() {
-            var pd = window.parent.document;
-            var targets = [
-                pd.querySelector('[data-testid="stAppViewContainer"]'),
-                pd.querySelector('section.main'),
-                pd.querySelector('.main'),
-                pd.documentElement
-            ];
-            for (var i = 0; i < targets.length; i++) {
-                if (targets[i]) {
-                    targets[i].scrollTop = 0;
-                    targets[i].scrollTo({top: 0, behavior: 'instant'});
+            try {
+                var pd = window.parent.document;
+                // Streamlit Cloud often uses .stMainBlockContainer or data-testid="stMain"
+                var targets = [
+                    pd.querySelector('.stMainBlockContainer'),
+                    pd.querySelector('[data-testid="stMain"]'),
+                    pd.querySelector('[data-testid="stAppViewContainer"]'),
+                    pd.querySelector('section.main'),
+                    pd.querySelector('.main'),
+                    pd.documentElement
+                ];
+                for (var i = 0; i < targets.length; i++) {
+                    if (targets[i]) {
+                        targets[i].scrollTop = 0;
+                        if (typeof targets[i].scrollTo === 'function') {
+                            targets[i].scrollTo({top: 0, behavior: 'instant'});
+                        }
+                    }
                 }
+                if (typeof window.parent.scrollTo === 'function') {
+                    window.parent.scrollTo(0, 0);
+                }
+            } catch(e) {
+                // Fallback if cross-origin iframe blocks window.parent
+                window.scrollTo(0, 0);
             }
-            window.parent.scrollTo(0, 0);
         }
         // Fire multiple times with staggered delays to beat Streamlit's render cycle
         doScroll();
-        setTimeout(doScroll, 50);
-        setTimeout(doScroll, 150);
+        setTimeout(doScroll, 100);
         setTimeout(doScroll, 300);
+        setTimeout(doScroll, 600);
     })();
     </script>
     """, height=0)
