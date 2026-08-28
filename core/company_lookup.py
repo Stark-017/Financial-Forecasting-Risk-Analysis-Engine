@@ -258,6 +258,28 @@ def get_company_info(symbol: str, exchange: str = 'NSE') -> Optional[dict]:
         try:
             t = yf.Ticker(ts)
             inf = t.info
+            
+            # Fallback for Streamlit Cloud yfinance blocking (.info returns {} or raises error)
+            if not inf or ('regularMarketPrice' not in inf and 'currentPrice' not in inf):
+                try:
+                    fi = t.fast_info
+                    if hasattr(fi, 'last_price') and fi.last_price is not None:
+                        inf = inf or {}
+                        inf['regularMarketPrice'] = fi.last_price
+                        inf['marketCap'] = getattr(fi, 'market_cap', 0)
+                        inf['fiftyTwoWeekHigh'] = getattr(fi, 'year_high', None)
+                        inf['fiftyTwoWeekLow'] = getattr(fi, 'year_low', None)
+                        
+                        # Lookup actual name from our builtin dictionary
+                        c_name = symbol
+                        for sym, name, exch, isin in BUILTIN_EQUITIES:
+                            if sym.upper() == symbol.upper():
+                                c_name = name
+                                break
+                        inf['longName'] = inf.get('longName', c_name)
+                except Exception:
+                    pass
+
             if inf and (inf.get('longName') or inf.get('shortName')):
                 if inf.get('regularMarketPrice') or inf.get('currentPrice') or inf.get('marketCap'):
                     info = inf
