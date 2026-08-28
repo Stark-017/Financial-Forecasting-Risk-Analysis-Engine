@@ -153,7 +153,12 @@ def _yfinance_search(query: str) -> List[dict]:
     """Use yfinance Search API only as fallback."""
     results = []
     try:
-        search_result = yf.Search(query, max_results=5, enable_fuzzy_query=True)
+        import requests
+        session = requests.Session()
+        session.headers.update({
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        })
+        search_result = yf.Search(query, max_results=5, enable_fuzzy_query=True, session=session)
         for q in search_result.quotes:
             exch = q.get('exchange', '')
             if exch in ('NSI', 'NSE', 'BSE', 'BOM'):
@@ -250,13 +255,19 @@ def get_company_info(symbol: str, exchange: str = 'NSE') -> Optional[dict]:
     """
     Verify company listing and fetch full metadata from yfinance.
     """
+    import requests
+    session = requests.Session()
+    session.headers.update({
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    })
+
     suffix = '.NS' if exchange == 'NSE' else '.BO'
     ticker_symbol = symbol.upper() + suffix
 
     info = None
     for ts in [symbol.upper() + '.NS', symbol.upper() + '.BO']:
         try:
-            t = yf.Ticker(ts)
+            t = yf.Ticker(ts, session=session)
             inf = t.info
             
             # Fallback for Streamlit Cloud yfinance blocking (.info returns {} or raises error)
