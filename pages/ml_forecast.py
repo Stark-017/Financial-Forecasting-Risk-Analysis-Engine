@@ -47,6 +47,7 @@ def page_ml_forecast():
 
     # Run ML Forecast button
     if st.button('🚀 Run ML Models & Hybrid Blend', type='primary', use_container_width=True):
+        st.info('⏳ Model is running, it might take upto 5 mins...')
         with st.spinner('Training ML models (Ridge, Random Forest, Gradient Boosting)...'):
             ml_results = run_ml_forecast(clean_data, n_years=1)
             st.session_state['ml_results'] = ml_results
