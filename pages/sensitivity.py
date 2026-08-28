@@ -131,8 +131,9 @@ def page_sensitivity():
                 xaxis_title=f'% Change in {target_label}',
                 yaxis_title='',
                 height=400,
-                xaxis=dict(gridcolor='#e2e8f0', zeroline=True, zerolinecolor='#0f172a', zerolinewidth=2),
             )
+          fig.update_xaxes(gridcolor='#e2e8f0', zeroline=True, zerolinecolor='#0f172a',zerolinewidth=2)
+      
             st.plotly_chart(fig, use_container_width=True)
 
             # Summary table
