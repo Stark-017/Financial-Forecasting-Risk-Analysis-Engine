@@ -307,6 +307,33 @@ def get_company_info(symbol: str, exchange: str = 'NSE') -> Optional[dict]:
                     inf['longName'] = c_name
 
             if inf and (inf.get('longName') or inf.get('shortName')):
+                # --- MANUAL CALCULATIONS FOR BLOCKED CLOUD SERVERS ---
+                # Calculate PE & PAT manually if Yahoo hides .info
+                if not inf.get('trailingPE') and inf.get('regularMarketPrice'):
+                    try:
+                        # Try to get Net Income
+                        pat_series = t.financials.loc['Net Income']
+                        if not pat_series.empty:
+                            recent_pat = float(pat_series.iloc[0])
+                            inf['trailingNetIncome'] = recent_pat
+                            mcap = inf.get('marketCap') or (inf['regularMarketPrice'] * t.fast_info.shares)
+                            if mcap and recent_pat > 0:
+                                inf['trailingPE'] = mcap / recent_pat
+                    except Exception:
+                        pass
+                
+                # Calculate PB manually
+                if not inf.get('priceToBook') and inf.get('regularMarketPrice'):
+                    try:
+                        eq_series = t.balancesheet.loc['Stockholders Equity']
+                        if not eq_series.empty:
+                            recent_eq = float(eq_series.iloc[0])
+                            mcap = inf.get('marketCap') or (inf['regularMarketPrice'] * t.fast_info.shares)
+                            if mcap and recent_eq > 0:
+                                inf['priceToBook'] = mcap / recent_eq
+                    except Exception:
+                        pass
+
                 if inf.get('regularMarketPrice') or inf.get('currentPrice') or inf.get('marketCap'):
                     info = inf
                     ticker_symbol = ts
