@@ -51,7 +51,8 @@ def _gauge(value, title, min_v=0, max_v=10, thresholds=None, suffix=''):
             },
         },
     ))
-    fig.update_layout(**CHART_LAYOUT, height=250, margin=dict(l=20, r=20, t=60, b=10))
+    fig.update_layout(**CHART_LAYOUT, height=250)
+    fig.update_layout(margin=dict(l=20, r=20, t=60, b=10))
     return fig
 
 
